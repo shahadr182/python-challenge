@@ -1,50 +1,76 @@
-print ("Election Results")
-print ("--------------------------------------------")
+# First we'll import the os module
+# This will allow us to create file paths across operating systems
+import os
 
-#modules
-import os 
+# Module for reading CSV files
 import csv
-import collections 
 
+# here's my election data - it's in a folder called resources in that lives at the same level as main.py
+election_data_csv = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'election_data.csv')
 
-# Set path for files
-csvpath = os.path.join('..', 'Resources', 'election_data.csv')
+totalVotes = 0 # total rows (not including the header is the total of votes)
 
-Total_votes = 0
+# empty dictionary to catch votes should be:
+# votesPerCandidate = {
+#   "candidate_one": votes as int
+# }
+votesPerCandidate = {}
 
-#1 
+# open up election_data
+with open(election_data_csv, newline='') as csvfile:
 
-sumkhan = 0 
-d=[]
-with open (csvpath) as csvfile:
-    reader = csv.reader(csvfile)
-    header = next(reader)
-    result = {}
-    for line in reader:
-        candidate = line[2]
-        Total_votes += 1
-        if candidate in result:
-            result[candidate]['vote_count'] += 1
+    # CSV reader specifies delimiter and variable that holds contents
+    csvreader = csv.reader(csvfile, delimiter=',')
+
+    # print(csvreader)
+
+    # Read the header row first
+    csv_header = next(csvreader)
+    # print(f"CSV Header: {csv_header}")
+
+    # Read each row of data after the header
+    for row in csvreader:
+        totalVotes += 1
+        if row[2] not in votesPerCandidate:
+            votesPerCandidate[row[2]] = 1
         else:
-            result[candidate] = {'vote_count': 1}
-    winner = list(result.keys())[0]
-    output = []
-    for candidate in result:
-        result[candidate]['percentage_vote'] = (result[candidate]['vote_count']/ Total_votes) * 100
-        result[candidate]['candidate'] = candidate
-        if result[winner]['vote_count'] < result[candidate]['vote_count']:
-            winner = candidate
-        output.append(result[candidate])    
-             
-with open('output.txt', 'w') as output_file:
-    print('Total Votes: ', Total_votes)
-    output_file.write('Total Votes: {} \n'.format(Total_votes))
-    print('-------------------------')
-    output_file.write('------------------------- \n')
-    for candidate in sorted(output, key= lambda x: x['vote_count'], reverse=True):     
-        print('{}: {}% ({})'.format(candidate['candidate'], round(candidate['percentage_vote'], 3), candidate['vote_count']))
-        output_file.write('{}: {}% ({}) \n'.format(candidate['candidate'], round(candidate['percentage_vote'], 3), candidate['vote_count']))
-    print('-------------------------')
-    output_file.write('------------------------- \n')
-    print('Winner: ',winner)
-    output_file.write('Winner: {}'.format(winner))
+            votesPerCandidate[row[2]] += 1   
+        
+        
+
+
+print("Election Results")
+print("-------------------------")
+print("Total Votes: " + str(totalVotes))
+print("-------------------------")
+
+for candidate, votes in votesPerCandidate.items():
+    print(candidate + ": " + "{:.3%}".format(votes/totalVotes) + "   (" +  str(votes) + ")")
+    
+print("-------------------------") 
+
+winner = max(votesPerCandidate, key=votesPerCandidate.get)
+
+print(f"Winner: {winner}")
+
+# now write this to an output file
+
+f = open("election_results.txt", "w")
+f.write("Election Results")
+f.write('\n')
+f.write("-------------------------")
+f.write('\n')
+f.write("Total Votes: " + str(totalVotes))
+f.write('\n')
+f.write("-------------------------")
+f.write('\n')
+
+for candidate, votes in votesPerCandidate.items():
+    f.write(candidate + ": " + "{:.3%}".format(votes/totalVotes) + "   (" +  str(votes) + ")")
+    f.write('\n')
+  
+f.write("-------------------------") 
+f.write('\n')
+f.write(f"Winner: {winner}")
+f.write('\n')
+
